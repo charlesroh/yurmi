@@ -2,7 +2,6 @@ import streamlit as st
 import pandas as pd
 import matplotlib.pyplot as plt
 import numpy as np
-import time
 from matplotlib.animation import FuncAnimation
 
 # 초기 변수 설정
@@ -49,11 +48,11 @@ planet_point, = ax.plot([], [], 'o', color='blue', label='행성')
 # 애니메이션 함수
 def update(frame):
     t = frame / 10.0  # 시간 증가
-    star_x = R * np.cos(2 * np.pi * t / P + np.pi)
-    star_y = R * np.sin(2 * np.pi * t / P + np.pi)
-    planet_x = r * np.cos(2 * np.pi * t / P)
-    planet_y = r * np.sin(2 * np.pi * t / P)
-
+    star_x = np.array([R * np.cos(2 * np.pi * t / P + np.pi)])
+    star_y = np.array([R * np.sin(2 * np.pi * t / P + np.pi)])
+    planet_x = np.array([r * np.cos(2 * np.pi * t / P)])
+    planet_y = np.array([r * np.sin(2 * np.pi * t / P)])
+    
     star_point.set_data(star_x, star_y)
     planet_point.set_data(planet_x, planet_y)
     return star_point, planet_point
