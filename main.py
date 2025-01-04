@@ -11,7 +11,12 @@ def load_data():
     data = pd.read_excel(file_path, sheet_name='Sheet1', skiprows=6)
     data = data[['Unnamed: 10', 'Unnamed: 11', 'Unnamed: 12']]
     data.columns = ['Angle', 'Time', 'Radial_Velocity']
-    data = data.dropna()
+    
+    # 데이터 타입 변환 및 결측값 제거
+    data = data.dropna()  # Null 값 제거
+    data['Time'] = pd.to_numeric(data['Time'], errors='coerce')  # 숫자로 변환
+    data['Radial_Velocity'] = pd.to_numeric(data['Radial_Velocity'], errors='coerce')  # 숫자로 변환
+    data = data.dropna()  # 변환 후 다시 Null 값 제거
     return data
 
 data = load_data()
