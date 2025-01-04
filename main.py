@@ -45,28 +45,44 @@ planet_orbit.set_data(planet_x, planet_y)
 star_point, = ax.plot([], [], 'o', color='orange', label='항성')
 planet_point, = ax.plot([], [], 'o', color='blue', label='행성')
 
-# 애니메이션 함수
-def update(frame):
-    t = frame / 10.0  # 시간 증가
-    star_x = np.array([R * np.cos(2 * np.pi * t / P + np.pi)])
-    star_y = np.array([R * np.sin(2 * np.pi * t / P + np.pi)])
-    planet_x = np.array([r * np.cos(2 * np.pi * t / P)])
-    planet_y = np.array([r * np.sin(2 * np.pi * t / P)])
-    
-    star_point.set_data(star_x, star_y)
-    planet_point.set_data(planet_x, planet_y)
-    return star_point, planet_point
+# 애니메이션 시작 버튼
+start_simulation = st.button("애니메이션 시작")
 
-ani = FuncAnimation(fig, update, frames=range(1000), interval=50, blit=True)
-st.pyplot(fig)
-
-# 시선속도 변화 그래프
+# 시선속도 변화 그래프 초기화
 st.subheader('시간에 따른 항성의 시선속도 변화')
+fig2, ax2 = plt.subplots()
 times = np.linspace(0, P, 1000)
 Vr = (2 * np.pi * R / P) * np.sin(2 * np.pi * times / P + np.pi)
-fig2, ax2 = plt.subplots()
 ax2.plot(times, Vr, label='시선속도')
+current_time_marker, = ax2.plot([], [], 'ro', label='현재 시간')
 ax2.set_xlabel('시간 (t)')
 ax2.set_ylabel('시선속도 (Vr)')
 ax2.legend()
-st.pyplot(fig2)
+
+# 애니메이션 함수
+if start_simulation:
+    def update(frame):
+        t = frame / 10.0  # 시간 증가
+
+        # 항성과 행성 위치 계산
+        star_x = np.array([R * np.cos(2 * np.pi * t / P + np.pi)])
+        star_y = np.array([R * np.sin(2 * np.pi * t / P + np.pi)])
+        planet_x = np.array([r * np.cos(2 * np.pi * t / P)])
+        planet_y = np.array([r * np.sin(2 * np.pi * t / P)])
+
+        # 시선속도 그래프의 현재 시간 표시
+        current_time = t % P
+        Vr_current = (2 * np.pi * R / P) * np.sin(2 * np.pi * current_time / P + np.pi)
+        current_time_marker.set_data([current_time], [Vr_current])
+
+        # 업데이트
+        star_point.set_data(star_x, star_y)
+        planet_point.set_data(planet_x, planet_y)
+        return star_point, planet_point, current_time_marker
+
+    ani = FuncAnimation(fig, update, frames=range(1000), interval=50, blit=True)
+    st.pyplot(fig)
+    st.pyplot(fig2)
+else:
+    st.pyplot(fig)
+    st.pyplot(fig2)
