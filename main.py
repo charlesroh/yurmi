@@ -89,7 +89,27 @@ Vr = (2 * np.pi * R / P) * np.sin(2 * np.pi * time_steps / P + np.pi)
 
 fig2 = go.Figure()
 fig2.add_trace(go.Scatter(x=time_steps, y=Vr, mode='lines', name='시선속도'))
+# 초기 점 추가
+fig2.add_trace(go.Scatter(x=[time_steps[0]], y=[Vr[0]], mode='markers', marker=dict(color='red', size=10), name='현재 위치'))
+
 fig2.update_layout(width=800, height=400,
                    xaxis_title='시간 (t)',
-                   yaxis_title='시선속도 (Vr)')
+                   yaxis_title='시선속도 (Vr)',
+                   updatemenus=[dict(type="buttons",
+                                     showactive=False,
+                                     buttons=[dict(label="▶ Start",
+                                                   method="animate",
+                                                   args=[None, dict(frame=dict(duration=50, redraw=True),
+                                                                    fromcurrent=True)])])])
+
+# 애니메이션 프레임 추가
+frames2 = []
+for t, v in zip(time_steps, Vr):
+    frame = go.Frame(data=[go.Scatter(x=[t], y=[v], mode='markers',
+                                       marker=dict(color='red', size=10))])
+    frames2.append(frame)
+
+fig2.frames = frames2
+
+# Streamlit에 Plotly 그래프 표시
 st.plotly_chart(fig2)
