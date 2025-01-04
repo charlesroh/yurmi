@@ -1,6 +1,7 @@
 import streamlit as st
 import pandas as pd
 import matplotlib.pyplot as plt
+import numpy as np
 
 # GitHub Raw 파일 URL
 file_path = 'https://raw.githubusercontent.com/yurmii/yurmi/refs/heads/main/doppler_effect_data.xlsx'
@@ -22,17 +23,53 @@ def load_data():
 data = load_data()
 
 # Streamlit UI
-st.title('도플러 효과 시선속도 분석')
-st.write('외계행성계에서 도플러 효과로 인한 중심별의 시선속도 변화를 분석합니다.')
+st.title('도플러 효과 분석 및 궤도 시뮬레이션')
+st.write('외계행성계에서 도플러 효과로 인한 중심별의 시선속도 변화를 분석하고 별과 행성의 궤도를 시뮬레이션합니다.')
 
 # 시선속도 변화 그래프
 st.subheader('시간에 따른 시선속도 변화')
-fig, ax = plt.subplots()
-ax.plot(data['Time'], data['Radial_Velocity'], marker='o', label='시선속도')
-ax.set_xlabel('시간 (t)')
-ax.set_ylabel('시선속도 (km/s)')
-ax.legend()
-st.pyplot(fig)
+fig1, ax1 = plt.subplots()
+ax1.plot(data['Time'], data['Radial_Velocity'], marker='o', label='시선속도')
+ax1.set_xlabel('시간 (t)')
+ax1.set_ylabel('시선속도 (km/s)')
+ax1.legend()
+st.pyplot(fig1)
+
+# 별과 행성의 궤도 시뮬레이션
+st.subheader('별과 행성의 공전 궤도')
+
+def orbit_simulation():
+    fig, ax = plt.subplots(figsize=(8, 8))
+    ax.set_aspect('equal')
+    ax.set_xlim(-700, 700)
+    ax.set_ylim(-700, 700)
+    ax.set_xlabel('X 좌표 (AU)')
+    ax.set_ylabel('Y 좌표 (AU)')
+
+    # 별과 행성의 공전 반지름
+    star_orbit_radius = 60  # AU
+    planet_orbit_radius = 600  # AU
+
+    # 공전 데이터 생성
+    angles = np.linspace(0, 2 * np.pi, len(data))  # 각도 데이터 (0~360도)
+    star_x = star_orbit_radius * np.cos(angles)
+    star_y = star_orbit_radius * np.sin(angles)
+    planet_x = planet_orbit_radius * np.cos(angles)
+    planet_y = planet_orbit_radius * np.sin(angles)
+
+    # 궤도 그리기
+    ax.plot(star_x, star_y, label='항성 궤도', color='orange')
+    ax.plot(planet_x, planet_y, label='행성 궤도', color='blue')
+
+    # 초기 위치 표시
+    ax.scatter([star_x[0]], [star_y[0]], color='orange', label='항성 초기 위치', zorder=5)
+    ax.scatter([planet_x[0]], [planet_y[0]], color='blue', label='행성 초기 위치', zorder=5)
+
+    ax.legend()
+    return fig
+
+fig2 = orbit_simulation()
+st.pyplot(fig2)
 
 # 데이터 테이블 표시
 st.subheader('데이터 테이블')
