@@ -26,15 +26,6 @@ data = load_data()
 st.title('도플러 효과 분석 및 궤도 시뮬레이션')
 st.write('외계행성계에서 도플러 효과로 인한 중심별의 시선속도 변화를 분석하고 별과 행성의 궤도를 시뮬레이션합니다.')
 
-# 시선속도 변화 그래프
-st.subheader('시간에 따른 시선속도 변화')
-fig1, ax1 = plt.subplots()
-ax1.plot(data['Time'], data['Radial_Velocity'], marker='o', label='시선속도')
-ax1.set_xlabel('시간 (t)')
-ax1.set_ylabel('시선속도 (km/s)')
-ax1.legend()
-st.pyplot(fig1)
-
 # 별과 행성의 궤도 시뮬레이션
 st.subheader('별과 행성의 공전 궤도')
 
@@ -68,9 +59,14 @@ def orbit_simulation():
     ax.legend()
     return fig
 
-fig2 = orbit_simulation()
-st.pyplot(fig2)
+fig1 = orbit_simulation()
+st.pyplot(fig1)
 
-# 데이터 테이블 표시
-st.subheader('데이터 테이블')
-st.dataframe(data)
+# 시선속도 변화 그래프
+st.subheader('시간에 따른 시선속도 변화')
+fig2, ax2 = plt.subplots()
+ax2.plot(data['Time'], data['Radial_Velocity'], marker='o', label='시선속도')
+ax2.set_xlabel('시간 (t)')
+ax2.set_ylabel('시선속도 (km/s)')
+ax2.legend()
+st.pyplot(fig2)
