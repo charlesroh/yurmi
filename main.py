@@ -2,6 +2,10 @@ import streamlit as st
 import pandas as pd
 import matplotlib.pyplot as plt
 
+pip install matplotlib
+matplotlib
+streamlit run main.py
+
 # 데이터 로드
 @st.cache
 def load_data():
