@@ -1,19 +1,32 @@
 import streamlit as st
+import pandas as pd
+import matplotlib.pyplot as plt
 
-# 앱 제목
-st.title('나의 첫 Streamlit 프로젝트')
+# 데이터 로드
+@st.cache
+def load_data():
+    file_path = '/mnt/data/도플러 효과 연습용.xlsx'
+    data = pd.read_excel(file_path, sheet_name='Sheet1', skiprows=6)
+    data = data[['Unnamed: 10', 'Unnamed: 11', 'Unnamed: 12']]
+    data.columns = ['Angle', 'Time', 'Radial_Velocity']
+    data = data.dropna()
+    return data
 
-# 설명 문구
-st.write('안녕하세요! Streamlit에 오신 것을 환영합니다.')
+data = load_data()
 
-# 간단한 입력 필드와 버튼
-user_input = st.text_input('이름을 입력해주세요:')
-if st.button('확인'):
-    st.write(f'{user_input}님, 반갑습니다!')
+# 제목 및 설명
+st.title('도플러 효과 시선속도 분석')
+st.write('이 애플리케이션은 외계 행성계에서 도플러 효과에 의해 변화하는 중심별의 시선속도를 분석합니다.')
 
-# 간단한 숫자 입력과 계산
-a = st.number_input('첫 번째 숫자를 입력하세요:', min_value=0, value=0)
-b = st.number_input('두 번째 숫자를 입력하세요:', min_value=0, value=0)
+# 데이터 시각화
+st.subheader('시선속도 변화 그래프')
+fig, ax = plt.subplots()
+ax.plot(data['Time'], data['Radial_Velocity'], label='시선속도', marker='o')
+ax.set_xlabel('시간 (t)')
+ax.set_ylabel('시선속도 (km/s)')
+ax.legend()
+st.pyplot(fig)
 
-if st.button('더하기 실행'):
-    st.write(f'결과: {a + b}')
+# 데이터 테이블 표시
+st.subheader('데이터 테이블')
+st.dataframe(data)
