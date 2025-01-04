@@ -6,7 +6,7 @@ import numpy as np
 # 데이터 로드
 @st.cache
 def load_data():
-    file_path = 'https://raw.githubusercontent.com/yurmii/yurmi/main/%EB%8F%8C%ED%94%84%EB%9F%AC%20%ED%9A%A8%EA%B3%BC%20%EC%97%B0%EC%8A%B5%EC%9A%A9.xlsx'
+    file_path = 'https://raw.githubusercontent.com/yurmii/yurmi/main/도플러%20효과%20연습용.xlsx'
     data = pd.read_excel(file_path, sheet_name='Sheet1', skiprows=6)
     data = data[['Unnamed: 10', 'Unnamed: 11', 'Unnamed: 12']]
     data.columns = ['Angle', 'Time', 'Radial_Velocity']
