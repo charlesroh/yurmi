@@ -2,71 +2,72 @@ import streamlit as st
 import pandas as pd
 import matplotlib.pyplot as plt
 import numpy as np
+import time
+from matplotlib.animation import FuncAnimation
 
-# GitHub Raw 파일 URL
-file_path = 'https://raw.githubusercontent.com/yurmii/yurmi/refs/heads/main/doppler_effect_data.xlsx'
+# 초기 변수 설정
+M = 300  # 항성 질량
+m = 30   # 행성 질량
+r = 300  # 행성의 공전 반지름 (고정)
+P = 100  # 공전 주기
+R = (m * r) / M  # 초기 항성의 공전 반지름 계산
 
-# 데이터 로드
-@st.cache_data
-def load_data():
-    data = pd.read_excel(file_path, sheet_name='Sheet1', skiprows=6)
-    data = data[['Unnamed: 10', 'Unnamed: 11', 'Unnamed: 12']]
-    data.columns = ['Angle', 'Time', 'Radial_Velocity']
-    
-    # 데이터 타입 변환 및 결측값 제거
-    data = data.dropna()  # Null 값 제거
-    data['Time'] = pd.to_numeric(data['Time'], errors='coerce')  # 숫자로 변환
-    data['Radial_Velocity'] = pd.to_numeric(data['Radial_Velocity'], errors='coerce')  # 숫자로 변환
-    data = data.dropna()  # 변환 후 다시 Null 값 제거
-    return data
+# Streamlit 앱 제목
+st.title('외계행성계 공전 시뮬레이션 및 시선속도 분석')
+st.write("항성 질량(M), 행성 질량(m)을 변경하여 궤도를 확인하세요.")
 
-data = load_data()
+# 사용자 입력을 통해 질량 값 변경
+M = st.number_input("항성 질량 (M):", value=M, step=10)
+m = st.number_input("행성 질량 (m):", value=m, step=1)
+R = (m * r) / M  # 항성의 공전 반지름 업데이트
 
-# Streamlit UI
-st.title('도플러 효과 분석 및 궤도 시뮬레이션')
-st.write('외계행성계에서 도플러 효과로 인한 중심별의 시선속도 변화를 분석하고 별과 행성의 궤도를 시뮬레이션합니다.')
+# 시뮬레이션 초기화
+fig, ax = plt.subplots(figsize=(8, 8))
+ax.set_aspect('equal')
+ax.set_xlim(-700, 700)
+ax.set_ylim(-700, 700)
+ax.set_xlabel('X 좌표 (AU)')
+ax.set_ylabel('Y 좌표 (AU)')
 
-# 별과 행성의 궤도 시뮬레이션
-st.subheader('별과 행성의 공전 궤도')
+# 궤도 점선 초기화
+star_orbit, = ax.plot([], [], 'orange', linestyle='--', label='항성 궤도')
+planet_orbit, = ax.plot([], [], 'blue', linestyle='--', label='행성 궤도')
 
-def orbit_simulation():
-    fig, ax = plt.subplots(figsize=(8, 8))
-    ax.set_aspect('equal')
-    ax.set_xlim(-700, 700)
-    ax.set_ylim(-700, 700)
-    ax.set_xlabel('X 좌표 (AU)')
-    ax.set_ylabel('Y 좌표 (AU)')
+# 궤도 업데이트
+angles = np.linspace(0, 2 * np.pi, 100)
+star_x = R * np.cos(angles)
+star_y = R * np.sin(angles)
+planet_x = r * np.cos(angles)
+planet_y = r * np.sin(angles)
+star_orbit.set_data(star_x, star_y)
+planet_orbit.set_data(planet_x, planet_y)
 
-    # 별과 행성의 공전 반지름
-    star_orbit_radius = 60  # AU
-    planet_orbit_radius = 600  # AU
+# 실시간 좌표 점 초기화
+star_point, = ax.plot([], [], 'o', color='orange', label='항성')
+planet_point, = ax.plot([], [], 'o', color='blue', label='행성')
 
-    # 공전 데이터 생성
-    angles = np.linspace(0, 2 * np.pi, len(data))  # 각도 데이터 (0~360도)
-    star_x = star_orbit_radius * np.cos(angles)
-    star_y = star_orbit_radius * np.sin(angles)
-    planet_x = planet_orbit_radius * np.cos(angles)
-    planet_y = planet_orbit_radius * np.sin(angles)
+# 애니메이션 함수
+def update(frame):
+    t = frame / 10.0  # 시간 증가
+    star_x = R * np.cos(2 * np.pi * t / P + np.pi)
+    star_y = R * np.sin(2 * np.pi * t / P + np.pi)
+    planet_x = r * np.cos(2 * np.pi * t / P)
+    planet_y = r * np.sin(2 * np.pi * t / P)
 
-    # 궤도 그리기
-    ax.plot(star_x, star_y, label='항성 궤도', color='orange')
-    ax.plot(planet_x, planet_y, label='행성 궤도', color='blue')
+    star_point.set_data(star_x, star_y)
+    planet_point.set_data(planet_x, planet_y)
+    return star_point, planet_point
 
-    # 초기 위치 표시
-    ax.scatter([star_x[0]], [star_y[0]], color='orange', label='항성 초기 위치', zorder=5)
-    ax.scatter([planet_x[0]], [planet_y[0]], color='blue', label='행성 초기 위치', zorder=5)
-
-    ax.legend()
-    return fig
-
-fig1 = orbit_simulation()
-st.pyplot(fig1)
+ani = FuncAnimation(fig, update, frames=range(1000), interval=50, blit=True)
+st.pyplot(fig)
 
 # 시선속도 변화 그래프
-st.subheader('시간에 따른 시선속도 변화')
+st.subheader('시간에 따른 항성의 시선속도 변화')
+times = np.linspace(0, P, 1000)
+Vr = (2 * np.pi * R / P) * np.sin(2 * np.pi * times / P + np.pi)
 fig2, ax2 = plt.subplots()
-ax2.plot(data['Time'], data['Radial_Velocity'], marker='o', label='시선속도')
+ax2.plot(times, Vr, label='시선속도')
 ax2.set_xlabel('시간 (t)')
-ax2.set_ylabel('시선속도 (km/s)')
+ax2.set_ylabel('시선속도 (Vr)')
 ax2.legend()
 st.pyplot(fig2)
