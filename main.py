@@ -1,8 +1,7 @@
 import streamlit as st
 import pandas as pd
-import matplotlib.pyplot as plt
 import numpy as np
-from matplotlib.animation import FuncAnimation
+import plotly.graph_objects as go
 
 # 초기 변수 설정
 M = 300  # 항성 질량
@@ -20,69 +19,77 @@ M = st.number_input("항성 질량 (M):", value=M, step=10)
 m = st.number_input("행성 질량 (m):", value=m, step=1)
 R = (m * r) / M  # 항성의 공전 반지름 업데이트
 
-# 시뮬레이션 초기화
-fig, ax = plt.subplots(figsize=(8, 8))
-ax.set_aspect('equal')
-ax.set_xlim(-700, 700)
-ax.set_ylim(-700, 700)
-ax.set_xlabel('X 좌표 (AU)')
-ax.set_ylabel('Y 좌표 (AU)')
+# 공전 궤도 애니메이션
+st.subheader("항성과 행성의 공전 궤도")
 
-# 궤도 점선 초기화
-star_orbit, = ax.plot([], [], 'orange', linestyle='--', label='항성 궤도')
-planet_orbit, = ax.plot([], [], 'blue', linestyle='--', label='행성 궤도')
+# 시간 데이터 생성
+time_steps = np.linspace(0, P, 200)
 
-# 궤도 업데이트
-angles = np.linspace(0, 2 * np.pi, 100)
-star_x = R * np.cos(angles)
-star_y = R * np.sin(angles)
-planet_x = r * np.cos(angles)
-planet_y = r * np.sin(angles)
-star_orbit.set_data(star_x, star_y)
-planet_orbit.set_data(planet_x, planet_y)
+# 궤도 데이터 생성
+star_x = R * np.cos(2 * np.pi * time_steps / P + np.pi)
+star_y = R * np.sin(2 * np.pi * time_steps / P + np.pi)
+planet_x = r * np.cos(2 * np.pi * time_steps / P)
+planet_y = r * np.sin(2 * np.pi * time_steps / P)
 
-# 실시간 좌표 점 초기화
-star_point, = ax.plot([], [], 'o', color='orange', label='항성')
-planet_point, = ax.plot([], [], 'o', color='blue', label='행성')
+# Plotly Figure 생성
+fig = go.Figure()
 
-# 애니메이션 시작 버튼
-start_simulation = st.button("애니메이션 시작")
+# 항성 및 행성 궤도 추가
+fig.add_trace(go.Scatter(x=R * np.cos(np.linspace(0, 2 * np.pi, 100)),
+                         y=R * np.sin(np.linspace(0, 2 * np.pi, 100)),
+                         mode='lines',
+                         line=dict(color='orange', dash='dash'),
+                         name='항성 궤도'))
+fig.add_trace(go.Scatter(x=r * np.cos(np.linspace(0, 2 * np.pi, 100)),
+                         y=r * np.sin(np.linspace(0, 2 * np.pi, 100)),
+                         mode='lines',
+                         line=dict(color='blue', dash='dash'),
+                         name='행성 궤도'))
 
-# 시선속도 변화 그래프 초기화
+# 애니메이션 데이터 추가
+fig.add_trace(go.Scatter(x=[star_x[0]],
+                         y=[star_y[0]],
+                         mode='markers',
+                         marker=dict(color='orange', size=10),
+                         name='항성'))
+fig.add_trace(go.Scatter(x=[planet_x[0]],
+                         y=[planet_y[0]],
+                         mode='markers',
+                         marker=dict(color='blue', size=10),
+                         name='행성'))
+
+# Layout 설정
+fig.update_layout(width=800, height=800,
+                  xaxis=dict(range=[-700, 700]),
+                  yaxis=dict(range=[-700, 700]),
+                  updatemenus=[dict(type="buttons",
+                                    showactive=False,
+                                    buttons=[dict(label="▶ Start",
+                                                  method="animate",
+                                                  args=[None, dict(frame=dict(duration=50, redraw=True),
+                                                                   fromcurrent=True)])])])
+
+# 애니메이션 프레임 추가
+frames = []
+for t, sx, sy, px, py in zip(time_steps, star_x, star_y, planet_x, planet_y):
+    frame = go.Frame(data=[go.Scatter(x=[sx], y=[sy], mode='markers',
+                                      marker=dict(color='orange', size=10)),
+                           go.Scatter(x=[px], y=[py], mode='markers',
+                                      marker=dict(color='blue', size=10))])
+    frames.append(frame)
+
+fig.frames = frames
+
+# Streamlit에 Plotly 그래프 표시
+st.plotly_chart(fig)
+
+# 시선속도 변화 그래프
 st.subheader('시간에 따른 항성의 시선속도 변화')
-fig2, ax2 = plt.subplots()
-times = np.linspace(0, P, 1000)
-Vr = (2 * np.pi * R / P) * np.sin(2 * np.pi * times / P + np.pi)
-ax2.plot(times, Vr, label='시선속도')
-current_time_marker, = ax2.plot([], [], 'ro', label='현재 시간')
-ax2.set_xlabel('시간 (t)')
-ax2.set_ylabel('시선속도 (Vr)')
-ax2.legend()
+Vr = (2 * np.pi * R / P) * np.sin(2 * np.pi * time_steps / P + np.pi)
 
-# 애니메이션 함수
-if start_simulation:
-    def update(frame):
-        t = frame / 10.0  # 시간 증가
-
-        # 항성과 행성 위치 계산
-        star_x = np.array([R * np.cos(2 * np.pi * t / P + np.pi)])
-        star_y = np.array([R * np.sin(2 * np.pi * t / P + np.pi)])
-        planet_x = np.array([r * np.cos(2 * np.pi * t / P)])
-        planet_y = np.array([r * np.sin(2 * np.pi * t / P)])
-
-        # 시선속도 그래프의 현재 시간 표시
-        current_time = t % P
-        Vr_current = (2 * np.pi * R / P) * np.sin(2 * np.pi * current_time / P + np.pi)
-        current_time_marker.set_data([current_time], [Vr_current])
-
-        # 업데이트
-        star_point.set_data(star_x, star_y)
-        planet_point.set_data(planet_x, planet_y)
-        return star_point, planet_point, current_time_marker
-
-    ani = FuncAnimation(fig, update, frames=range(1000), interval=50, blit=True)
-    st.pyplot(fig)
-    st.pyplot(fig2)
-else:
-    st.pyplot(fig)
-    st.pyplot(fig2)
+fig2 = go.Figure()
+fig2.add_trace(go.Scatter(x=time_steps, y=Vr, mode='lines', name='시선속도'))
+fig2.update_layout(width=800, height=400,
+                   xaxis_title='시간 (t)',
+                   yaxis_title='시선속도 (Vr)')
+st.plotly_chart(fig2)
